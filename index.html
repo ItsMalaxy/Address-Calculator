@@ -82,6 +82,7 @@ function addValues(base, values) {
     return base + BigInt(values * VALUE_SIZE);
 }
 
+
 function formatAddress(value, length) {
     let result = value.toString(16).toUpperCase();
 
@@ -95,11 +96,9 @@ function formatAddress(value, length) {
 
 function calculate() {
 
-    let input = document.getElementById("address").value.trim().toUpperCase();
+    let input = document.getElementById("address").value.trim();
 
-    if (input.startsWith("0X")) {
-        input = input.substring(2);
-    }
+    input = input.replace(/^0x/i, "");
 
     let output = document.getElementById("output");
 
@@ -137,8 +136,7 @@ function calculate() {
                 continue;
             }
 
-
-            let address =
+            let current =
                 character1 +
                 BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
 
@@ -146,9 +144,8 @@ function calculate() {
             result +=
                 "Character " +
                 i +
-                ": ".padEnd(15 - ("Character " + i).length)
-                +
-                formatAddress(address, input.length)
+                ": " +
+                formatAddress(current, input.length)
                 +
                 "\n";
         }
@@ -156,23 +153,24 @@ function calculate() {
 
         output.value = result;
 
-    } catch {
+
+    } catch(error) {
+
+        console.log(error);
 
         output.value =
             "Invalid hexadecimal address.";
 
     }
-}
 
+}
 
 function copyResults() {
 
-    let output =
-        document.getElementById("output");
+    let text =
+        document.getElementById("output").value;
 
-    output.select();
-
-    navigator.clipboard.writeText(output.value);
+    navigator.clipboard.writeText(text);
 
 }
 
