@@ -79,9 +79,8 @@ const DEAD_BLOCKS = [25, 43, 64, 78];
 
 
 function addValues(base, values) {
-    return base + (values * VALUE_SIZE);
+    return base + BigInt(values * VALUE_SIZE);
 }
-
 
 function formatAddress(value, length) {
     let result = value.toString(16).toUpperCase();
