@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hex Address Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            background: #222;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #00ff00;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Hex Address Calculator</h1>
+
+<p>Enter Credits Starting Address:</p>
+
+<input id="address" placeholder="Example: 7F11A8CFF6A8">
+
+<button onclick="calculate()">Calculate</button>
+<button onclick="copyResults()">Copy</button>
+
+<textarea id="output" readonly></textarea>
+
+</div>
+
+
+<script>
+
+const VALUE_SIZE = 4;
+
+const RECHARGE_OFFSET = 90;
+const SURVIVAL_OFFSET = 168;
+const CHARACTER_1_OFFSET = 570;
+const CHARACTER_SPACING = 35;
+
+const DEAD_BLOCKS = [25, 43, 64, 78];
+
+
+function addValues(base, values) {
+    return base + (values * VALUE_SIZE);
+}
+
+
+function formatAddress(value, length) {
+    let result = value.toString(16).toUpperCase();
+
+    while (result.length < length) {
+        result = "0" + result;
+    }
+
+    return result;
+}
+
+
+function calculate() {
+
+    let input = document.getElementById("address").value.trim().toUpperCase();
+
+    if (input.startsWith("0X")) {
+        input = input.substring(2);
+    }
+
+    let output = document.getElementById("output");
+
+    try {
+
+        let base = BigInt("0x" + input);
+
+        let result = "";
+
+        result += "Credits:          "
+            + formatAddress(base, input.length)
+            + "\n";
+
+        result += "Recharge Cards:   "
+            + formatAddress(
+                addValues(base, RECHARGE_OFFSET),
+                input.length
+            )
+            + "\n";
+
+        result += "Survival Tickets: "
+            + formatAddress(
+                addValues(base, SURVIVAL_OFFSET),
+                input.length
+            )
+            + "\n\n";
+
+
+        let character1 = addValues(base, CHARACTER_1_OFFSET);
+
+
+        for (let i = 1; i <= 148; i++) {
+
+            if (DEAD_BLOCKS.includes(i)) {
+                continue;
+            }
+
+
+            let address =
+                character1 +
+                BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
+
+
+            result +=
+                "Character " +
+                i +
+                ": ".padEnd(15 - ("Character " + i).length)
+                +
+                formatAddress(address, input.length)
+                +
+                "\n";
+        }
+
+
+        output.value = result;
+
+    } catch {
+
+        output.value =
+            "Invalid hexadecimal address.";
+
+    }
+}
+
+
+function copyResults() {
+
+    let output =
+        document.getElementById("output");
+
+    output.select();
+
+    navigator.clipboard.writeText(output.value);
+
+}
+
+</script>
+
+</body>
+</html>
