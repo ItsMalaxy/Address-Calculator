@@ -59,7 +59,7 @@
 <input id="address" placeholder="Example: 7F11A8CFF6A8">
 
 <button onclick="calculate()">Calculate</button>
-<button onclick="copyResults()">Copy</button>
+    
     <label>
     Search Character:
     <input id="characterSearch" placeholder="Enter character name">
@@ -349,13 +349,6 @@ function calculate() {
 
 }
 
-function copyResults() {
-
-    let text =
-        document.getElementById("output").value;
-
-    navigator.clipboard.writeText(text);
-}
 
 function searchCharacter() {
 
