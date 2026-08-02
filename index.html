@@ -307,13 +307,15 @@ function calculate() {
                 BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
 
 
-            result +=
-                "Character " +
-                i +
-                ": " +
-                formatAddress(current, input.length)
-                +
-                "\n";
+        result +=
+    "Character " +
+    i +
+    " (" +
+    (CHARACTER_NAMES[i] || "Unknown") +
+    "): " +
+    formatAddress(current, input.length)
+    +
+    "\n";
         }
 
 
