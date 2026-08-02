@@ -60,6 +60,14 @@
 
 <button onclick="calculate()">Calculate</button>
 <button onclick="copyResults()">Copy</button>
+    <label>
+    Search Character:
+    <input id="characterSearch" placeholder="Enter character name">
+</label>
+
+<button onclick="searchCharacter()">Search</button>
+
+<pre id="searchResult"></pre>
 
 <textarea id="output" readonly></textarea>
 
@@ -340,7 +348,55 @@ function copyResults() {
         document.getElementById("output").value;
 
     navigator.clipboard.writeText(text);
+}
 
+function searchCharacter() {
+
+    let search =
+        document.getElementById("characterSearch")
+        .value
+        .toLowerCase();
+
+    let found = null;
+
+    for (let i = 1; i <= 148; i++) {
+
+        if (CHARACTER_NAMES[i] &&
+            CHARACTER_NAMES[i].toLowerCase() === search) {
+
+            found = i;
+            break;
+        }
+    }
+
+    if (found === null) {
+        document.getElementById("searchResult").innerHTML =
+            "Character not found";
+        return;
+    }
+
+
+    let baseInput =
+        document.getElementById("address").value;
+
+
+    let base =
+        BigInt("0x" + baseInput);
+
+
+    let characterAddress =
+        addValues(
+            base,
+            CHARACTER_1_OFFSET +
+            BigInt((found - 1) * CHARACTER_SPACING * VALUE_SIZE)
+        );
+
+
+    document.getElementById("searchResult").innerHTML =
+        "Character #" + found +
+        "\nName: " + CHARACTER_NAMES[found] +
+        "\nAddress: " +
+        formatAddress(characterAddress, baseInput.length);
 }
 
 </script>
