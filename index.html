@@ -76,6 +76,9 @@
 
 <script>
 
+let savedBase = null;
+let savedInputLength = 0;
+    
 const VALUE_SIZE = 4;
 
 const RECHARGE_OFFSET = 90;
@@ -279,6 +282,8 @@ function calculate() {
     try {
 
         let base = BigInt("0x" + input);
+        savedBase = base;
+savedInputLength = input.length;
 
         let result = "";
 
@@ -352,12 +357,21 @@ function copyResults() {
 
 function searchCharacter() {
 
+    if (savedBase === null) {
+        document.getElementById("searchResult").innerHTML =
+            "Calculate an address first.";
+        return;
+    }
+
     let search =
         document.getElementById("characterSearch")
         .value
+        .trim()
         .toLowerCase();
 
+
     let found = null;
+
 
     for (let i = 1; i <= 148; i++) {
 
@@ -369,24 +383,19 @@ function searchCharacter() {
         }
     }
 
+
     if (found === null) {
+
         document.getElementById("searchResult").innerHTML =
-            "Character not found";
+            "Character not found.";
+
         return;
     }
 
 
-    let baseInput =
-        document.getElementById("address").value;
-
-
-    let base =
-        BigInt("0x" + baseInput);
-
-
     let characterAddress =
         addValues(
-            base,
+            savedBase,
             CHARACTER_1_OFFSET +
             BigInt((found - 1) * CHARACTER_SPACING * VALUE_SIZE)
         );
@@ -396,7 +405,7 @@ function searchCharacter() {
         "Character #" + found +
         "\nName: " + CHARACTER_NAMES[found] +
         "\nAddress: " +
-        formatAddress(characterAddress, baseInput.length);
+        formatAddress(characterAddress, savedInputLength);
 }
 
 </script>
