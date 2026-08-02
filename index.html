@@ -370,42 +370,60 @@ function searchCharacter() {
         .toLowerCase();
 
 
-    let found = null;
+    if (search === "") {
+        document.getElementById("searchResult").innerHTML =
+            "Type a character name.";
+        return;
+    }
+
+
+    let matches = [];
 
 
     for (let i = 1; i <= 148; i++) {
 
-        if (CHARACTER_NAMES[i] &&
-            CHARACTER_NAMES[i].toLowerCase() === search) {
+        if (DEAD_BLOCKS.includes(i)) {
+            continue;
+        }
 
-            found = i;
-            break;
+
+        if (
+            CHARACTER_NAMES[i] &&
+            CHARACTER_NAMES[i]
+            .toLowerCase()
+            .includes(search)
+        ) {
+
+            let characterAddress =
+                addValues(
+                    savedBase,
+                    CHARACTER_1_OFFSET +
+                    BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE)
+                );
+
+
+            matches.push(
+                "#" + i +
+                " - " +
+                CHARACTER_NAMES[i] +
+                "\nAddress: " +
+                formatAddress(characterAddress, savedInputLength)
+            );
         }
     }
 
 
-    if (found === null) {
+    if (matches.length === 0) {
 
         document.getElementById("searchResult").innerHTML =
-            "Character not found.";
+            "No characters found.";
 
         return;
     }
 
 
-    let characterAddress =
-        addValues(
-            savedBase,
-            CHARACTER_1_OFFSET +
-            BigInt((found - 1) * CHARACTER_SPACING * VALUE_SIZE)
-        );
-
-
     document.getElementById("searchResult").innerHTML =
-        "Character #" + found +
-        "\nName: " + CHARACTER_NAMES[found] +
-        "\nAddress: " +
-        formatAddress(characterAddress, savedInputLength);
+        matches.join("\n\n");
 }
 
 </script>
