@@ -166,6 +166,50 @@
 
     #searchResult:empty { margin-top: 0; }
 
+    .suggestions {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 96px;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        max-height: 220px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+    }
+
+    .suggestions.open { display: block; }
+
+    .suggestion-item {
+        padding: 9px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        color: var(--text);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .suggestion-item:last-child { border-bottom: none; }
+
+    .suggestion-item:hover,
+    .suggestion-item.active {
+        background: var(--green-dim);
+        color: #05130c;
+    }
+
+    .suggestion-item .num {
+        color: var(--muted);
+        margin-right: 6px;
+        font-size: 11px;
+    }
+
+    .suggestion-item:hover .num,
+    .suggestion-item.active .num {
+        color: #05130c;
+        opacity: 0.7;
+    }
+
     .result-entry {
         border-left: 2px solid var(--green-dim);
         padding: 6px 0 6px 12px;
@@ -240,7 +284,6 @@
     <header>
         <h1>MEMORY ADDRESS CALCULATOR</h1>
     </header>
-    <p class="subtitle">$ resolve credits base -&gt; item &amp; character offsets</p>
 
     <div class="panel">
         <label class="label" for="address">Credits Starting Address</label>
@@ -248,14 +291,15 @@
             <input id="address" placeholder="e.g. 7F6B4930F1E8" autocomplete="off" spellcheck="false">
             <button onclick="calculate()">Calculate</button>
         </div>
-        <div class="hint" id="addressHint">Enter a hex address, then press Enter or click Calculate.</div>
+        <div class="hint" id="addressHint"></div>
     </div>
 
     <div class="panel">
         <label class="label" for="characterSearch">Search Character</label>
-        <div class="row">
+        <div class="row" style="position: relative;">
             <input id="characterSearch" placeholder="Character name" autocomplete="off" spellcheck="false">
             <button onclick="searchCharacter()">Search</button>
+            <div id="suggestions" class="suggestions"></div>
         </div>
         <div id="searchResult"></div>
     </div>
@@ -606,8 +650,97 @@ document.getElementById("address").addEventListener("keydown", function (e) {
 });
 
 document.getElementById("characterSearch").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") searchCharacter();
+    if (e.key === "Enter") {
+        const active = document.querySelector(".suggestion-item.active");
+        if (active) {
+            active.click();
+        } else {
+            closeSuggestions();
+            searchCharacter();
+        }
+        return;
+    }
+    if (e.key === "Escape") {
+        closeSuggestions();
+        return;
+    }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        moveSuggestionSelection(e.key === "ArrowDown" ? 1 : -1);
+    }
 });
+
+document.getElementById("characterSearch").addEventListener("input", function () {
+    renderSuggestions(this.value);
+});
+
+document.addEventListener("click", function (e) {
+    const box = document.getElementById("suggestions");
+    const input = document.getElementById("characterSearch");
+    if (e.target !== box && e.target !== input && !box.contains(e.target)) {
+        closeSuggestions();
+    }
+});
+
+const ALL_CHARACTERS = Object.keys(CHARACTER_NAMES)
+    .map(Number)
+    .filter(i => !DEAD_BLOCKS.includes(i))
+    .map(i => ({ id: i, name: CHARACTER_NAMES[i], nameLower: CHARACTER_NAMES[i].toLowerCase() }));
+
+function renderSuggestions(query) {
+    const box = document.getElementById("suggestions");
+    const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+        closeSuggestions();
+        return;
+    }
+
+    const matches = ALL_CHARACTERS
+        .filter(c => words.every(w => c.nameLower.includes(w)))
+        .slice(0, 8);
+
+    if (matches.length === 0) {
+        closeSuggestions();
+        return;
+    }
+
+    box.innerHTML = matches.map(c =>
+        '<div class="suggestion-item" data-name="' + c.name.replace(/"/g, '&quot;') + '">' +
+            '<span class="num">#' + c.id + '</span>' + c.name +
+        '</div>'
+    ).join("");
+
+    box.querySelectorAll(".suggestion-item").forEach(el => {
+        el.addEventListener("click", function () {
+            const input = document.getElementById("characterSearch");
+            input.value = this.getAttribute("data-name");
+            closeSuggestions();
+            searchCharacter();
+        });
+    });
+
+    box.classList.add("open");
+}
+
+function closeSuggestions() {
+    const box = document.getElementById("suggestions");
+    box.classList.remove("open");
+    box.innerHTML = "";
+}
+
+function moveSuggestionSelection(direction) {
+    const box = document.getElementById("suggestions");
+    const items = Array.from(box.querySelectorAll(".suggestion-item"));
+    if (items.length === 0) return;
+
+    let index = items.findIndex(el => el.classList.contains("active"));
+    items.forEach(el => el.classList.remove("active"));
+
+    index = (index + direction + items.length) % items.length;
+    items[index].classList.add("active");
+    items[index].scrollIntoView({ block: "nearest" });
+}
 
 </script>
 
