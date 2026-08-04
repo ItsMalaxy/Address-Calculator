@@ -214,6 +214,13 @@
         border-left: 2px solid var(--green-dim);
         padding: 6px 0 6px 12px;
         margin-bottom: 8px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        border-radius: 0 4px 4px 0;
+    }
+
+    .result-entry:hover {
+        background: rgba(0,255,156,0.05);
     }
 
     .result-entry .name {
@@ -223,6 +230,86 @@
 
     .result-entry .addr {
         color: var(--text);
+    }
+
+    .era-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 7px;
+    }
+
+    .era-tag {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.75;
+        margin-left: 8px;
+    }
+
+    .output-box {
+        width: 100%;
+        max-height: 480px;
+        overflow-y: auto;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 6px;
+        font-size: 13px;
+    }
+
+    .output-box:empty::before {
+        content: "Results will appear here after you calculate.";
+        color: var(--muted);
+        display: block;
+        padding: 10px 8px;
+    }
+
+    .output-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        transition: background 0.4s ease;
+    }
+
+    .output-row:hover {
+        background: rgba(0,255,156,0.05);
+    }
+
+    .output-row.flash {
+        background: rgba(255,176,0,0.18);
+    }
+
+    .output-row .left {
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .out-label {
+        color: var(--muted);
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    .out-addr {
+        color: var(--green);
+        font-weight: 500;
+    }
+
+    .output-divider {
+        color: var(--amber);
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 16px 8px 8px;
+        margin-top: 4px;
+        border-bottom: 1px solid var(--border);
     }
 
     .copy-inline {
@@ -240,32 +327,6 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 8px;
-    }
-
-    textarea {
-        width: 100%;
-        height: 460px;
-        background: var(--panel-2);
-        color: var(--green);
-        font-family: inherit;
-        font-size: 13px;
-        line-height: 1.5;
-        padding: 14px;
-        box-sizing: border-box;
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        resize: vertical;
-    }
-
-    .copy-btn {
-        font-size: 11px;
-        padding: 6px 14px;
-    }
-
-    .copy-btn.copied {
-        background: var(--green);
-        color: #05130c;
-        border-color: var(--green);
     }
 
     footer {
@@ -308,7 +369,7 @@
         <div class="output-header">
             <label class="label" style="margin-bottom:0;">Output</label>
         </div>
-        <textarea id="output" readonly placeholder="Results will appear here after you calculate."></textarea>
+        <div id="output" class="output-box"></div>
     </div>
 
     <footer>All addresses computed client-side. Nothing leaves this page.</footer>
@@ -501,6 +562,35 @@ function addValues(base, values) {
     return base + BigInt(values * VALUE_SIZE);
 }
 
+const ERA_RULES = [
+    ["Blackest Night", "#7c5cff"],
+    ["Injustice 2",    "#c14fff"],
+    ["Suicide Squad",  "#ff5c8a"],
+    ["Arkham Knight",  "#ffb000"],
+    ["Arkham Origins", "#ff8c42"],
+    ["Arkham",         "#ffb000"],
+    ["Red Son",        "#ff4757"],
+    ["New 52",         "#4fa8ff"],
+    ["Man of Steel",   "#5ce1ff"],
+    ["Teen Titans",    "#9dff5c"],
+    ["Batman Ninja",   "#c1ff5c"],
+    ["Insurgency",     "#ff7a45"],
+    ["Regime",         "#ff4757"],
+    ["Prime",          "#00ff9c"],
+    ["Rebirth",        "#ffd35c"],
+    ["Flashpoint",     "#5cffe1"],
+    ["Earth 2",        "#5c8aff"]
+];
+
+function getEraTag(name) {
+    for (const [keyword, color] of ERA_RULES) {
+        if (name.includes(keyword)) {
+            return { label: keyword, color: color };
+        }
+    }
+    return { label: "Other", color: "#5f7a6c" };
+}
+
 function formatAddress(value, length) {
     let result = value.toString(16).toUpperCase();
     while (result.length < length) {
@@ -509,13 +599,44 @@ function formatAddress(value, length) {
     return result;
 }
 
+let lastCalculatedInput = null;
+let lastOutputHTML = null;
+
+function simpleRowHTML(rowId, label, addr) {
+    const btnId = "copy_" + rowId;
+    return '<div class="output-row" id="row_' + rowId + '">' +
+        '<span class="left"><span class="out-label">' + label + '</span><span class="out-addr">' + addr + '</span></span>' +
+        '<button class="copy-inline" id="' + btnId + '" onclick="copyText(\'' + addr + '\', document.getElementById(\'' + btnId + '\'))">Copy</button>' +
+    '</div>';
+}
+
+function characterRowHTML(charId, name, addr) {
+    const era = getEraTag(name);
+    const btnId = "copy_char_" + charId;
+    return '<div class="output-row" id="charrow_' + charId + '">' +
+        '<span class="left">' +
+            '<span class="era-dot" style="background:' + era.color + '"></span>' +
+            '<span class="out-label">#' + charId + ' ' + name + '</span>' +
+            '<span class="out-addr">' + addr + '</span>' +
+        '</span>' +
+        '<button class="copy-inline" id="' + btnId + '" onclick="copyText(\'' + addr + '\', document.getElementById(\'' + btnId + '\'))">Copy</button>' +
+    '</div>';
+}
+
 function calculate() {
 
     const addressInput = document.getElementById("address");
     const hint = document.getElementById("addressHint");
-    let input = addressInput.value.trim().replace(/^0x/i, "");
+    let input = addressInput.value.trim().replace(/^0x/i, "").toUpperCase();
 
     const output = document.getElementById("output");
+
+    if (input.length > 0 && input === lastCalculatedInput) {
+        output.innerHTML = lastOutputHTML;
+        hint.textContent = "Calculated " + (148 - DEAD_BLOCKS.length) + " character addresses. (cached)";
+        hint.classList.remove("error");
+        return;
+    }
 
     try {
 
@@ -523,14 +644,12 @@ function calculate() {
 
         savedInputLength = input.length;
 
-        const lines = [];
+        const rows = [];
 
-        lines.push("Credits:          " + formatAddress(base, input.length));
-        lines.push("Recharge Cards:   " + formatAddress(addValues(base, RECHARGE_OFFSET), input.length));
-        lines.push("Survival Tickets: " + formatAddress(addValues(base, SURVIVAL_OFFSET), input.length));
-        lines.push("");
-        lines.push("──────── CHARACTERS ────────");
-        lines.push("");
+        rows.push(simpleRowHTML("credits", "Credits", formatAddress(base, input.length)));
+        rows.push(simpleRowHTML("recharge", "Recharge Cards", formatAddress(addValues(base, RECHARGE_OFFSET), input.length)));
+        rows.push(simpleRowHTML("survival", "Survival Tickets", formatAddress(addValues(base, SURVIVAL_OFFSET), input.length)));
+        rows.push('<div class="output-divider">Characters</div>');
 
         character1 = addValues(base, CHARACTER_1_OFFSET);
 
@@ -541,22 +660,25 @@ function calculate() {
             }
 
             const current = character1 + BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
+            const name = CHARACTER_NAMES[i] || "Unknown";
+            const addrStr = formatAddress(current, input.length);
 
-            lines.push(
-                "Character " + i +
-                " (" + (CHARACTER_NAMES[i] || "Unknown") + "): " +
-                formatAddress(current, input.length)
-            );
+            rows.push(characterRowHTML(i, name, addrStr));
         }
 
-        output.value = lines.join("\n");
+        const finalHTML = rows.join("");
+        output.innerHTML = finalHTML;
+
         hint.textContent = "Calculated " + (148 - DEAD_BLOCKS.length) + " character addresses.";
         hint.classList.remove("error");
+
+        lastCalculatedInput = input;
+        lastOutputHTML = finalHTML;
 
     } catch (error) {
 
         character1 = null;
-        output.value = "";
+        output.innerHTML = "";
         hint.textContent = "Invalid hexadecimal address. Digits 0-9 and A-F only.";
         hint.classList.add("error");
 
@@ -627,12 +749,15 @@ function searchCharacter() {
             const characterAddress = character1 + BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
             const addrStr = formatAddress(characterAddress, savedInputLength);
             const btnId = "copy_" + i;
+            const era = getEraTag(name);
 
             entries.push(
-                '<div class="result-entry">' +
-                    '<span class="name">#' + i + ' - ' + name + '</span><br>' +
+                '<div class="result-entry" onclick="jumpToCharacter(' + i + ')">' +
+                    '<span class="era-dot" style="background:' + era.color + '"></span>' +
+                    '<span class="name">#' + i + ' - ' + name + '</span>' +
+                    '<span class="era-tag" style="color:' + era.color + '">' + era.label + '</span><br>' +
                     '<span class="addr">' + addrStr + '</span>' +
-                    '<button class="copy-inline" id="' + btnId + '" onclick="copyText(\'' + addrStr + '\', document.getElementById(\'' + btnId + '\'))">Copy</button>' +
+                    '<button class="copy-inline" id="' + btnId + '" onclick="event.stopPropagation(); copyText(\'' + addrStr + '\', document.getElementById(\'' + btnId + '\'))">Copy</button>' +
                 '</div>'
             );
         }
@@ -641,6 +766,15 @@ function searchCharacter() {
     resultBox.innerHTML = entries.length
         ? entries.join("")
         : '<span style="color:var(--muted)">No characters found.</span>';
+}
+
+function jumpToCharacter(charId) {
+    const row = document.getElementById("charrow_" + charId);
+    if (!row) return;
+
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("flash");
+    setTimeout(() => row.classList.remove("flash"), 1000);
 }
 
 document.getElementById("address").addEventListener("input", validateAddressField);
@@ -705,11 +839,13 @@ function renderSuggestions(query) {
         return;
     }
 
-    box.innerHTML = matches.map(c =>
-        '<div class="suggestion-item" data-name="' + c.name.replace(/"/g, '&quot;') + '">' +
+    box.innerHTML = matches.map(c => {
+        const era = getEraTag(c.name);
+        return '<div class="suggestion-item" data-name="' + c.name.replace(/"/g, '&quot;') + '">' +
+            '<span class="era-dot" style="background:' + era.color + '"></span>' +
             '<span class="num">#' + c.id + '</span>' + c.name +
-        '</div>'
-    ).join("");
+        '</div>';
+    }).join("");
 
     box.querySelectorAll(".suggestion-item").forEach(el => {
         el.addEventListener("click", function () {
