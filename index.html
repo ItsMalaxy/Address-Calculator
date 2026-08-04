@@ -263,7 +263,6 @@
     <div class="panel output-wrap">
         <div class="output-header">
             <label class="label" style="margin-bottom:0;">Output</label>
-            <button class="copy-btn" id="copyBtn" onclick="copyOutput()">Copy</button>
         </div>
         <textarea id="output" readonly placeholder="Results will appear here after you calculate."></textarea>
     </div>
@@ -548,12 +547,6 @@ function copyText(text, btn) {
     });
 }
 
-function copyOutput() {
-    const output = document.getElementById("output");
-    if (!output.value) return;
-    copyText(output.value, document.getElementById("copyBtn"));
-}
-
 function searchCharacter() {
 
     const search = document.getElementById("characterSearch").value.toLowerCase().trim();
@@ -610,10 +603,6 @@ document.getElementById("characterSearch").addEventListener("keydown", function 
     if (e.key === "Enter") searchCharacter();
 });
 
-</script>
-
-</body>
-</html>
 </script>
 
 </body>
