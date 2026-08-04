@@ -1,74 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Hex Address Calculator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
-            padding: 20px;
-        }
+<meta charset="UTF-8">
+<title>Memory Address Calculator</title>
+<style>
+    :root {
+        --bg:        #0a0f0c;
+        --panel:     #121813;
+        --panel-2:   #0e1310;
+        --border:    #23302a;
+        --text:      #cfe8d8;
+        --muted:     #5f7a6c;
+        --green:     #00ff9c;
+        --green-dim: #0a8f5c;
+        --amber:     #ffb000;
+        --red:       #ff4757;
+    }
 
-        .container {
-            max-width: 700px;
-            margin: auto;
-        }
+    * { box-sizing: border-box; }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            font-size: 18px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
+    body {
+        font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        background: var(--bg);
+        color: var(--text);
+        padding: 24px;
+        margin: 0;
+        background-image:
+            repeating-linear-gradient(
+                0deg,
+                rgba(0,255,156,0.015) 0px,
+                rgba(0,255,156,0.015) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+    }
 
-        button {
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
+    .container {
+        max-width: 760px;
+        margin: auto;
+    }
 
-        textarea {
-            width: 100%;
-            height: 500px;
-            margin-top: 20px;
-            background: #222;
-            color: #00ff00;
-            font-family: monospace;
-            font-size: 14px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+    header {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 14px;
+    }
 
-        h1 {
-            color: #00ff00;
-        }
-    </style>
+    h1 {
+        color: var(--green);
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    h1::after {
+        content: "_";
+        animation: blink 1.1s steps(1) infinite;
+        color: var(--amber);
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 4px 0 20px;
+        letter-spacing: 0.5px;
+    }
+
+    .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+    }
+
+    .label {
+        color: var(--amber);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .row {
+        display: flex;
+        gap: 10px;
+    }
+
+    input {
+        flex: 1;
+        width: 100%;
+        padding: 11px 12px;
+        font-size: 15px;
+        font-family: inherit;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.15s ease;
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    input:focus {
+        border-color: var(--green-dim);
+    }
+
+    input.valid {
+        border-color: var(--green-dim);
+    }
+
+    input.invalid {
+        border-color: var(--red);
+    }
+
+    button {
+        padding: 11px 20px;
+        font-size: 13px;
+        font-family: inherit;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+        background: transparent;
+        border: 1px solid var(--green-dim);
+        color: var(--green);
+        border-radius: 4px;
+        transition: background 0.15s ease, color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    button:hover {
+        background: var(--green-dim);
+        color: #05130c;
+    }
+
+    button:active {
+        transform: translateY(1px);
+    }
+
+    .hint {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    .hint.error {
+        color: var(--red);
+    }
+
+    #searchResult {
+        font-size: 13px;
+        line-height: 1.6;
+        margin-top: 12px;
+        color: var(--text);
+    }
+
+    #searchResult:empty { margin-top: 0; }
+
+    .result-entry {
+        border-left: 2px solid var(--green-dim);
+        padding: 6px 0 6px 12px;
+        margin-bottom: 8px;
+    }
+
+    .result-entry .name {
+        color: var(--green);
+        font-weight: 600;
+    }
+
+    .result-entry .addr {
+        color: var(--text);
+    }
+
+    .copy-inline {
+        padding: 2px 8px;
+        font-size: 10px;
+        margin-left: 8px;
+    }
+
+    .output-wrap {
+        position: relative;
+    }
+
+    .output-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 460px;
+        background: var(--panel-2);
+        color: var(--green);
+        font-family: inherit;
+        font-size: 13px;
+        line-height: 1.5;
+        padding: 14px;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        resize: vertical;
+    }
+
+    .copy-btn {
+        font-size: 11px;
+        padding: 6px 14px;
+    }
+
+    .copy-btn.copied {
+        background: var(--green);
+        color: #05130c;
+        border-color: var(--green);
+    }
+
+    footer {
+        color: var(--muted);
+        font-size: 11px;
+        text-align: center;
+        margin-top: 18px;
+    }
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>Hex Address Calculator</h1>
+    <header>
+        <h1>MEMORY ADDRESS CALCULATOR</h1>
+    </header>
+    <p class="subtitle">$ resolve credits base -&gt; item &amp; character offsets</p>
 
-<p>Enter Credits Starting Address:</p>
+    <div class="panel">
+        <label class="label" for="address">Credits Starting Address</label>
+        <div class="row">
+            <input id="address" placeholder="e.g. 7F6B4930F1E8" autocomplete="off" spellcheck="false">
+            <button onclick="calculate()">Calculate</button>
+        </div>
+        <div class="hint" id="addressHint">Enter a hex address, then press Enter or click Calculate.</div>
+    </div>
 
-<input id="address" placeholder="Address #">
+    <div class="panel">
+        <label class="label" for="characterSearch">Search Character</label>
+        <div class="row">
+            <input id="characterSearch" placeholder="Character name" autocomplete="off" spellcheck="false">
+            <button onclick="searchCharacter()">Search</button>
+        </div>
+        <div id="searchResult"></div>
+    </div>
 
-<button onclick="calculate()">Calculate</button>
-    
-<p>Search Character:</p>
-    
-<input id="characterSearch" placeholder="Character Name">
+    <div class="panel output-wrap">
+        <div class="output-header">
+            <label class="label" style="margin-bottom:0;">Output</label>
+            <button class="copy-btn" id="copyBtn" onclick="copyOutput()">Copy</button>
+        </div>
+        <textarea id="output" readonly placeholder="Results will appear here after you calculate."></textarea>
+    </div>
 
-<button onclick="searchCharacter()">Search</button>
-
-<pre id="searchResult"></pre>
-
-<textarea id="output" readonly></textarea>
+    <footer>All addresses computed client-side. Nothing leaves this page.</footer>
 
 </div>
 
@@ -76,9 +276,8 @@
 <script>
 
 let character1 = null;
-let savedBase = null;
 let savedInputLength = 0;
-    
+
 const VALUE_SIZE = 4;
 
 const RECHARGE_OFFSET = 90;
@@ -259,57 +458,38 @@ function addValues(base, values) {
     return base + BigInt(values * VALUE_SIZE);
 }
 
-
 function formatAddress(value, length) {
     let result = value.toString(16).toUpperCase();
-
     while (result.length < length) {
         result = "0" + result;
     }
-
     return result;
 }
 
-
 function calculate() {
 
-    let input = document.getElementById("address").value.trim();
+    const addressInput = document.getElementById("address");
+    const hint = document.getElementById("addressHint");
+    let input = addressInput.value.trim().replace(/^0x/i, "");
 
-    input = input.replace(/^0x/i, "");
-
-    let output = document.getElementById("output");
+    const output = document.getElementById("output");
 
     try {
 
-        let base = BigInt("0x" + input);
-        
-        savedBase = base;
+        const base = BigInt("0x" + input);
+
         savedInputLength = input.length;
 
-        let result = "";
+        const lines = [];
 
-        result += "Credits:          "
-            + formatAddress(base, input.length)
-            + "\n";
-
-        result += "Recharge Cards:   "
-            + formatAddress(
-                addValues(base, RECHARGE_OFFSET),
-                input.length
-            )
-            + "\n";
-
-        result += "Survival Tickets: "
-            + formatAddress(
-                addValues(base, SURVIVAL_OFFSET),
-                input.length
-            )
-            + "\n\n";
-
+        lines.push("Credits:          " + formatAddress(base, input.length));
+        lines.push("Recharge Cards:   " + formatAddress(addValues(base, RECHARGE_OFFSET), input.length));
+        lines.push("Survival Tickets: " + formatAddress(addValues(base, SURVIVAL_OFFSET), input.length));
+        lines.push("");
+        lines.push("──────── CHARACTERS ────────");
+        lines.push("");
 
         character1 = addValues(base, CHARACTER_1_OFFSET);
-
-        console.log(CHARACTER_NAMES[1]);
 
         for (let i = 1; i <= 148; i++) {
 
@@ -317,54 +497,79 @@ function calculate() {
                 continue;
             }
 
-            let current =
-                character1 +
-                BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
+            const current = character1 + BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
 
-
-        result +=
-    "Character " +
-    i +
-    " (" +
-    (CHARACTER_NAMES[i] || "Unknown") +
-    "): " +
-    formatAddress(current, input.length)
-    +
-    "\n";
+            lines.push(
+                "Character " + i +
+                " (" + (CHARACTER_NAMES[i] || "Unknown") + "): " +
+                formatAddress(current, input.length)
+            );
         }
 
+        output.value = lines.join("\n");
+        hint.textContent = "Calculated " + (148 - DEAD_BLOCKS.length) + " character addresses.";
+        hint.classList.remove("error");
 
-        output.value = result;
+    } catch (error) {
 
-
-    } catch(error) {
-
-        console.log(error);
-
-        output.value =
-            "Invalid hexadecimal address.";
+        character1 = null;
+        output.value = "";
+        hint.textContent = "Invalid hexadecimal address. Digits 0-9 and A-F only.";
+        hint.classList.add("error");
 
     }
-
 }
 
+function validateAddressField() {
+    const field = document.getElementById("address");
+    const val = field.value.trim().replace(/^0x/i, "");
+
+    field.classList.remove("valid", "invalid");
+
+    if (val.length === 0) return;
+
+    if (/^[0-9A-Fa-f]+$/.test(val)) {
+        field.classList.add("valid");
+    } else {
+        field.classList.add("invalid");
+    }
+}
+
+function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        if (!btn) return;
+        const original = btn.textContent;
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove("copied");
+        }, 1200);
+    });
+}
+
+function copyOutput() {
+    const output = document.getElementById("output");
+    if (!output.value) return;
+    copyText(output.value, document.getElementById("copyBtn"));
+}
 
 function searchCharacter() {
 
-    let search = document
-        .getElementById("characterSearch")
-        .value
-        .toLowerCase()
-        .trim();
+    const search = document.getElementById("characterSearch").value.toLowerCase().trim();
+    const resultBox = document.getElementById("searchResult");
 
-    let resultBox = document.getElementById("searchResult");
-
-    if (search === "") {
-        resultBox.innerHTML = "Type a character name.";
+    if (character1 === null) {
+        resultBox.innerHTML = '<span style="color:var(--muted)">Calculate an address first.</span>';
         return;
     }
 
-    let matches = "";
+    if (search === "") {
+        resultBox.innerHTML = '<span style="color:var(--muted)">Type a character name.</span>';
+        return;
+    }
+
+    const entries = [];
 
     for (let i = 1; i <= 148; i++) {
 
@@ -372,30 +577,43 @@ function searchCharacter() {
             continue;
         }
 
-        let name = CHARACTER_NAMES[i];
+        const name = CHARACTER_NAMES[i];
 
         if (name && name.toLowerCase().includes(search)) {
 
-            let characterAddress =
-                character1 +
-                BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
+            const characterAddress = character1 + BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
+            const addrStr = formatAddress(characterAddress, savedInputLength);
+            const btnId = "copy_" + i;
 
-            matches +=
-                "#" + i +
-                " - " + name +
-                "<br>Address: " +
-                formatAddress(characterAddress, savedInputLength) +
-                "<br><br>";
+            entries.push(
+                '<div class="result-entry">' +
+                    '<span class="name">#' + i + ' - ' + name + '</span><br>' +
+                    '<span class="addr">' + addrStr + '</span>' +
+                    '<button class="copy-inline" id="' + btnId + '" onclick="copyText(\'' + addrStr + '\', document.getElementById(\'' + btnId + '\'))">Copy</button>' +
+                '</div>'
+            );
         }
     }
 
-    if (matches === "") {
-        resultBox.innerHTML = "No characters found.";
-    } else {
-        resultBox.innerHTML = matches;
-    }
+    resultBox.innerHTML = entries.length
+        ? entries.join("")
+        : '<span style="color:var(--muted)">No characters found.</span>';
 }
 
+document.getElementById("address").addEventListener("input", validateAddressField);
+
+document.getElementById("address").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") calculate();
+});
+
+document.getElementById("characterSearch").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") searchCharacter();
+});
+
+</script>
+
+</body>
+</html>
 </script>
 
 </body>
