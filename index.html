@@ -312,6 +312,37 @@
         border-bottom: 1px solid var(--border);
     }
 
+    .output-row.row-alt {
+        background: rgba(255,255,255,0.02);
+    }
+
+    .output-row.row-alt:hover {
+        background: rgba(0,255,156,0.06);
+    }
+
+    .output-row.last-jumped {
+        border-left: 2px solid var(--amber);
+        padding-left: 6px;
+    }
+
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
     .copy-inline {
         padding: 2px 8px;
         font-size: 10px;
@@ -369,6 +400,7 @@
         <div class="output-header">
             <label class="label" style="margin-bottom:0;">Output</label>
         </div>
+        <div class="legend" id="legend"></div>
         <div id="output" class="output-box"></div>
     </div>
 
@@ -600,6 +632,7 @@ function formatAddress(value, length) {
 }
 
 let lastCalculatedInput = null;
+let lastJumpedCharId = null;
 let lastOutputHTML = null;
 
 function simpleRowHTML(rowId, label, addr) {
@@ -610,10 +643,11 @@ function simpleRowHTML(rowId, label, addr) {
     '</div>';
 }
 
-function characterRowHTML(charId, name, addr) {
+function characterRowHTML(charId, name, addr, altIndex) {
     const era = getEraTag(name);
     const btnId = "copy_char_" + charId;
-    return '<div class="output-row" id="charrow_' + charId + '">' +
+    const altClass = (altIndex % 2 === 1) ? " row-alt" : "";
+    return '<div class="output-row' + altClass + '" id="charrow_' + charId + '">' +
         '<span class="left">' +
             '<span class="era-dot" style="background:' + era.color + '"></span>' +
             '<span class="out-label">#' + charId + ' ' + name + '</span>' +
@@ -635,6 +669,7 @@ function calculate() {
         output.innerHTML = lastOutputHTML;
         hint.textContent = "Calculated " + (148 - DEAD_BLOCKS.length) + " character addresses. (cached)";
         hint.classList.remove("error");
+        lastJumpedCharId = null;
         return;
     }
 
@@ -653,6 +688,8 @@ function calculate() {
 
         character1 = addValues(base, CHARACTER_1_OFFSET);
 
+        let altIndex = 0;
+
         for (let i = 1; i <= 148; i++) {
 
             if (DEAD_BLOCKS.includes(i)) {
@@ -663,7 +700,8 @@ function calculate() {
             const name = CHARACTER_NAMES[i] || "Unknown";
             const addrStr = formatAddress(current, input.length);
 
-            rows.push(characterRowHTML(i, name, addrStr));
+            rows.push(characterRowHTML(i, name, addrStr, altIndex));
+            altIndex++;
         }
 
         const finalHTML = rows.join("");
@@ -674,6 +712,7 @@ function calculate() {
 
         lastCalculatedInput = input;
         lastOutputHTML = finalHTML;
+        lastJumpedCharId = null;
 
     } catch (error) {
 
@@ -772,8 +811,15 @@ function jumpToCharacter(charId) {
     const row = document.getElementById("charrow_" + charId);
     if (!row) return;
 
+    if (lastJumpedCharId !== null) {
+        const prevRow = document.getElementById("charrow_" + lastJumpedCharId);
+        if (prevRow) prevRow.classList.remove("last-jumped");
+    }
+
     row.scrollIntoView({ behavior: "smooth", block: "center" });
-    row.classList.add("flash");
+    row.classList.add("flash", "last-jumped");
+    lastJumpedCharId = charId;
+
     setTimeout(() => row.classList.remove("flash"), 1000);
 }
 
@@ -877,6 +923,23 @@ function moveSuggestionSelection(direction) {
     items[index].classList.add("active");
     items[index].scrollIntoView({ block: "nearest" });
 }
+
+function buildLegend() {
+    const seen = new Map();
+    Object.values(CHARACTER_NAMES).forEach(name => {
+        const era = getEraTag(name);
+        if (!seen.has(era.label)) {
+            seen.set(era.label, era.color);
+        }
+    });
+
+    const legend = document.getElementById("legend");
+    legend.innerHTML = Array.from(seen.entries()).map(([label, color]) =>
+        '<span class="legend-item"><span class="era-dot" style="background:' + color + '"></span>' + label + '</span>'
+    ).join("");
+}
+
+buildLegend();
 
 </script>
 
