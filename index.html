@@ -550,6 +550,7 @@ function copyText(text, btn) {
 function searchCharacter() {
 
     const search = document.getElementById("characterSearch").value.toLowerCase().trim();
+    const searchWords = search.split(/\s+/).filter(Boolean);
     const resultBox = document.getElementById("searchResult");
 
     if (character1 === null) {
@@ -557,7 +558,7 @@ function searchCharacter() {
         return;
     }
 
-    if (search === "") {
+    if (searchWords.length === 0) {
         resultBox.innerHTML = '<span style="color:var(--muted)">Type a character name.</span>';
         return;
     }
@@ -571,8 +572,13 @@ function searchCharacter() {
         }
 
         const name = CHARACTER_NAMES[i];
+        const nameLower = name ? name.toLowerCase() : "";
 
-        if (name && name.toLowerCase().includes(search)) {
+        const matchesAllWords = name
+            ? searchWords.every(word => nameLower.includes(word))
+            : false;
+
+        if (matchesAllWords) {
 
             const characterAddress = character1 + BigInt((i - 1) * CHARACTER_SPACING * VALUE_SIZE);
             const addrStr = formatAddress(characterAddress, savedInputLength);
